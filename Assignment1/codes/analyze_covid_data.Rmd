@@ -1,0 +1,295 @@
+---
+title: "DA2 - Assignment 1 - COVID-19 Analysis"
+author: "Dominik Gulacsy, 28/11/2020""
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, echo=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+options(scipen=1)
+defaultW <- getOption("warn") 
+options(warn = -1)
+```
+
+```{r, results='hide', message=FALSE, warning=FALSE}
+#initialize environment
+rm(list = ls())
+library(tidyverse)
+require(scales)
+# Estimate piecewise linear splines
+library(lspline)
+# Estimate robust SE
+library(estimatr)
+# Compare models with robust SE
+library(texreg)
+# For different themes
+library(ggthemes)
+library(knitr)
+library(ggplot2)
+```
+
+```{r echo=FALSE}
+#Load data
+path<-'/Users/Dominik/OneDrive - Central European University/1st_trimester/DA2/Assignments/Assignment1'
+df<-read.csv(paste0(path,'/data/clean/covid_pop_09_21_2020_clean.csv'))
+```
+
+## General Introduction
+# Aim of Analysis
+The goal of this analysis is to look at what kind of patterns of association can be discovered between COVID-19 deaths and confirmed cases. One possible final objective of such analysis is to evaluate the healthcare system of different countries to a certain extent. However, this interpretation of model results should be considered with carefulness and limitations has to be made. This is partly because in the analysis only one particular aspect of the situation is taken into account, deaths compared to confirmed cases. Furthermore, results are not controlled for many other variables that may also affect a country's numbers (e.g.: demographic structure and sociological dynamics) AKA confounders.
+
+# Variable description and Data Quality Assessment
+My variables of focus in this analysis are deaths per capita and confirmed cases per capita for each country it is available. All COVID-19 data is from administrative sources and reported by the countries themselves. The process of data gathering may differ from countries to countries and even within the country. For example, in larger countries like India the process may be different in different counties/municipalities. In case of this dataset, we may have multiple interpretations of how the population can be defined. One possibility is to consider the population as all COVID-19 infection cases that occurred until 21th Sept 2020. Therefore the gathered data represents only the part of the population which was effectively observed (mainly by testing). An other way to look at it is to say that the population is the infinite number of possible outcomes of COVID-19 infections and consequences and this data only shows one realization of such random variable.
+One of the issues regarding data quality is that there are some countries where the numbers reported may be influenced due to political reasons. So these countries' numbers may be significantly lower than actually they are. Secondly, reliability is also questionable. It is hard to believe that if cases were recounted they would be the same for the same observations. Most likely the data contains many errors due to duplication, mishandling and so on. 
+## Exploratory Data Analysis
+# Drop irrelevent observations
+In case of those countries that have very low confirmed cases, numbers do not really reflect their capability to combat the virus. To have countries where there is at least some information on their performance I dropped countries with lower than 100 confirmed cases to only include more exposed countries in the analysis.
+Death per capita and confirmed cases per capita are rather small numbers so I scaled the variables to show deaths and confirmed cases per 100K persons. This way they are more interpretable.
+```{r echo=FALSE}
+# Drop countries with very low confirmed cases
+df <- df[which(df$confirmed>100),]
+
+# Get Y & X variables (Number of registered death per capita & Number of registered case per capita)
+df$death_pc <- df$death/df$population
+df$confirmed_pc <- df$confirmed/df$population
+
+# Scaling variables
+# Update Y & X variables to show as "per 100K persons" 
+df$death_p100Kp <- 100000*df$death/df$population
+df$confirmed_p100Kp <- 100000*df$confirmed/df$population
+```
+
+# Summary Statistics
+```{r echo=FALSE, message=FALSE, warning=FALSE, out.width="65%"}
+# Histograms of Y & X variables
+df[,c("confirmed_p100Kp","death_p100Kp")] %>%
+  keep(is.numeric) %>% 
+  gather() %>% 
+  ggplot(aes(value)) +
+  facet_wrap(~key, scales = "free") +
+  geom_histogram()+
+  theme_economist() + 
+  scale_fill_economist()
+
+# Summary statistics
+summary <- summary(df[,c("death_p100Kp","confirmed_p100Kp")])
+kable(summary)
+```
+Both confirmed cases and deaths per 100K person have a distribution with a long right tail, similarly to a lognormal distribution. Most countries have a death rate between 0.97 and 13.71 deaths per 100K persons with a mean of 12.88 and maximum of 124.04 (San Marino) deaths per 100K persons. In case of confirmed cases most countries have a rate between 62.75 and 671.16 per 100K persons with a mean of 515.03 and a maximum of 4364 (Qatar) confirmed cases per 100K persons.
+
+# Variable Transformation (Taking logs)
+```{r echo=FALSE}
+# Transform scaled Y & X variables by log
+df$ln_death_p100Kp <- log(df$death_p100Kp, )
+df$ln_confirmed_p100Kp <- log(df$confirmed_p100Kp)
+df_ln <- df
+
+# Replace -Inf values with NA
+df_ln[mapply(is.infinite, df_ln)] <- NA
+# Drop observations with missing values due to taking log(0)
+df_ln <- na.omit(df_ln)
+```
+
+
+Substantial: Level changes in both deaths and confirmed cases are hard to interpret, however it can be resolved by taking the logarithm of the variables. Percentage differences make more sense.
+Statistical: As it could be seen on the histograms of variables they have distribution similar to lognormal. Therefore taking the logarithm of these variables would result in distribution that are approximately normal. This is favorable characteristic in statistics. It provides much better approximation since it makes the association close to linear. In other cases the degree of non-linearity is very high.
+For these reasons I decided to take the ln of variables. In order to this I dropped those observations where the number of deaths is 0.
+
+## Model Selection
+# Running models
+To find out which model specification is the best I ran the following 4 regression models:
+1. Simple linear regression
+2. Quadratic (linear) regression
+3. Piecewise linear spline regression
+4. Weighted linear regression, using population as weights
+
+Results were the following:
+```{r, echo=FALSE, results='hide'}
+#### MODEL SELECTION
+# Model specification to go forward with: log - log model
+# Create quadratic explanatory variable to add to dataframe
+df <- df_ln[,c("country","confirmed_p100Kp","death_p100Kp","ln_confirmed_p100Kp","ln_death_p100Kp","population")]
+df <- df %>% mutate(ln_confirmed_p100Kp_sq = ln_confirmed_p100Kp^2)
+
+# 1) Simple linear regression
+reg1 <- lm_robust( ln_death_p100Kp ~ ln_confirmed_p100Kp , data = df , se_type = "HC2" )
+reg1
+# Summary Statistics
+summary( reg1 )
+
+# 2) Quadratic (linear) regression
+reg2 <- lm_robust( ln_death_p100Kp ~ ln_confirmed_p100Kp + ln_confirmed_p100Kp_sq , data = df )
+summary( reg2 )
+  
+
+# 3) Piecewise linear spline regression
+# Define the cutoff for ln_confirmed_p100Kp
+cutoff_ln <- 7
+# Run piecewise linear spline regression
+reg3 <- lm_robust(ln_death_p100Kp ~ lspline( ln_confirmed_p100Kp , cutoff_ln ), data = df )
+summary( reg3 )
+
+# 4) Weighted linear regression, using population as weights
+# Weighted-OLS: use reg4 setup and weight with population
+reg4 <- lm_robust(ln_death_p100Kp ~ ln_confirmed_p100Kp, data = df , weights = population)
+summary( reg4 )
+```
+
+```{r, results = 'asis', echo = FALSE}
+# Create model comparison summary
+data_out <- "/Users/Dominik/OneDrive - Central European University/1st_trimester/DA2/Assignments/Assignment1/outs/"
+texreg( list(reg1 , reg2 , reg3 , reg4),
+         type = 'pdf',
+         custom.model.names = c("ln(Deaths/100K) - linear","ln(Deaths/100K) - quadratic",
+                                "ln(Deaths/100K) - PLS", "ln(Deaths/100K) - WLS"),
+         caption = "Modelling COVID-19 deaths based on population and confirmed cases (ln transformed variables)",
+         table = FALSE, use.packages = FALSE,
+         #file = paste0( data_out ,'model_comparison.html'), 
+         include.ci = T)
+
+```
+
+We can see that the simple linear regression provides a pretty good result. Both intercept and coefficient is significant at 5% significance level. R squared is high considering that it only contains one explanatory variable. The model explains 78% of variance in the data. The quadratic model does not really provides a better fit. The quadratic variable's coefficient is insignificant. R squared is nearly the same as in case of the linear model. The piecewise linear regression suffers from the same problems. The beta after the cutoff point is insignificant and R squared is only marginally better. The last model is the weighted linear regression with population as its weights. It has significant coefficients and R squared is considerably higher than in case of other models however the RMSE is quite high.  
+
+Finally, I decided to go forward with the simple linear regression.
+The main reasons behind it is that it is easier to interpret a log-log model for countries. Also it is a much simpler model so coefficients can be interpreted well while it gives a good approximation with a relatively high R squared. 
+
+Chosen model:
+$$ln(deaths/100K) = \alpha + \beta*ln(confirmed/100K)$$
+where the explanatory variable is the natural logarithm of confirmed cases per 100K persons and the dependent variable is the natural logarithm of death per 100K persons.
+
+According to this model the average natural log of deaths per 100K persons is -3.597 when the natural log of confirmed cases per 100K persons is 0 (alpha cannot be intuitively interpreted). Furthermore, this model also tells that deaths per 100K persons is 0.937% higher for countries with one percent higher confirmed cases per 100K persons (beta). 
+
+
+# Hypothesis Testing
+Let's test the beta if it's zero. I pick a 5% significance level to test the following:
+$$H_{0}: \beta= 0  ; H_{1}: \beta \neq\ 0$$
+```{r}
+# Selected model reg1: Simple Linear Regression
+# Test if beta coefficient is equal to 0  
+# H0: beta = 0, HA: beta != 0 
+kable(summary(reg1)$coefficients[2,])
+# P value is close to zero so we can reject the null hypothesis that beta is zero. Beta is statistically significant.
+```
+Based on the test results we can reject that the null hypothesis because the p value is close to zero. Therefore beta is statistically significant.
+
+## Residual Analysis
+Now let's look at which countries did the best and worst relatively, based on model expectation.
+Those top 5 countries that had a lower death rate than we would have expected based on their number of confirmed cases, using the chosen regression model were the following:
+```{r echo=FALSE}
+# Residual analysis
+# Get the predicted y values from the model by transforming back the explanatory variable
+df$reg1_ln_y_pred <- reg1$fitted.values
+df$reg1_y_pred <- exp(reg1$fitted.values)
+# Calculate the errors of the model
+df$reg1_res <- df$death_p100Kp - df$reg1_y_pred
+
+# Find countries with relatively low death numbers (largest negative errors) 
+kable(df %>% top_n( -5 , reg1_res ) %>% 
+  select( country , death_p100Kp , reg1_y_pred , reg1_res))
+```
+As we can see the best performing countries are mostly smaller countries in the Middle East. This might have to do with that in smaller countries measures can be more effectively executed. However, it can also be the case that there is lack of proper documentation procedure in these countries.
+
+
+Those top 5 countries that had a higher death rate than we would have expected based on their number of confirmed cases, using the chosen regression model were the following:
+```{r}
+# Find countries with relatively high death numbers (largest positive errors)
+kable(df %>% top_n( 5 , reg1_res ) %>% 
+  select( country , death_p100Kp , reg1_y_pred , reg1_res))
+
+```
+As we can see the worst performing countries are very different from each other. There are European and Latin American countries on the list. Some of them are larger like the UK or Peru and some of them is smaller like Ecuador and San Marino. We may drill down and consider other variables to understand this more deeply, but from this we cannot really say much more.
+
+## Executive Summar
+
+In this analysis I investigated the pattern of association between death rates and confirmed cases. I used deaths per 100K persons and confirmed cases per 100K persons metrics of each country. I took the natural logarithm of these variables to have better interpretation and the preferred characteristics of normality. I ran 4 different model specifications and picked the simple linear regression as my choice of model. The main message of this model is that deaths per 100K persons is 0.937% higher for countries with one percent higher confirmed cases per 100K persons. To have more faith in this model it would worth checking if leaving out some outliers would majorly change the model results. If results would be the same then we could be more confident in this model, however if it would differ dramatically then it would weaken the conclusion of the model.
+
+## Appendix
+
+```{r echo=FALSE}
+# Check scatterplots
+# Investigate where it makes most sense to use a log transformed variable
+# Checking level-level vs level-log vs log-level vs log-log models
+# 1) death_p100Kp - confirmed_p100Kp: level-level model
+ggplot( df , aes(x = confirmed_p100Kp, y = death_p100Kp)) +
+  geom_point() +
+  geom_smooth(method="loess")+
+  labs(x = "Confirmed Cases (per 100K persons)",y = "Deaths (per 100K persons)")
+
+# 2) death_p100Kp - ln_confirmed_p100Kp: level-log model
+ggplot( df , aes(x = confirmed_p100Kp, y = death_p100Kp)) +
+  geom_point() +
+  geom_smooth(method="loess")+
+  labs(x = "Confirmed Cases (per 100K persons, ln scale)",y = "Deaths (per 100K persons)") +
+  scale_x_continuous( trans = log_trans(),  breaks = c(1,2,5,10,20,50,100,200,500,1000,10000) )
+
+# 3) death_p100Kp - ln_confirmed_p100Kp: log-level model
+ggplot( df_ln , aes(x = confirmed_p100Kp, y = death_p100Kp)) +
+  geom_point() +
+  geom_smooth(method="loess")+
+  labs(x = "Confirmed Cases (per 100K persons)",y = "Deaths (per 100K persons, ln scale)") +
+  scale_y_continuous( trans = log_trans(), breaks = c(0,0.1,1,2,5,10,20,50))
+
+# 4) death_p100Kp - ln_confirmed_p100Kp: log-log model
+ggplot( df_ln , aes(x = confirmed_p100Kp, y = death_p100Kp)) +
+  geom_point() +
+  geom_smooth(method="loess")+
+  labs(x = "Confirmed Cases (per 100K persons, ln scale)",y = "Deaths (per 100K persons, ln scale)") +
+  scale_x_continuous( trans = log_trans(),  breaks = c(1,2,5,10,20,50,100,200,500,1000,10000) ) +
+  scale_y_continuous( trans = log_trans(), breaks = c(0,0.1,1,2,5,10,20,50,100,1000))
+```
+
+```{r echo=FALSE}
+#### MODEL SELECTION
+# Model specification to go forward with: log - log model
+# Create quadratic explanatory variable to add to dataframe
+df <- df_ln[,c("country","confirmed_p100Kp","death_p100Kp","ln_confirmed_p100Kp","ln_death_p100Kp","population")]
+df <- df %>% mutate(ln_confirmed_p100Kp_sq = ln_confirmed_p100Kp^2)
+
+# 1) Simple linear regression
+reg1 <- lm_robust( ln_death_p100Kp ~ ln_confirmed_p100Kp , data = df , se_type = "HC2" )
+reg1
+# Summary Statistics
+summary( reg1 )
+# Visual inspection:
+ggplot( data = df, aes( x = ln_confirmed_p100Kp, y = ln_death_p100Kp ) ) + 
+  geom_point( color='blue') +
+  geom_smooth( method = lm , color = 'red' ) +
+  labs(x = " ln(Confirmed Cases, per 100K persons)",y = "ln(Deaths, per 100K persons)")
+
+# 2) Quadratic (linear) regression
+reg2 <- lm_robust( ln_death_p100Kp ~ ln_confirmed_p100Kp + ln_confirmed_p100Kp_sq , data = df )
+summary( reg2 )
+ggplot( data = df, aes( x = ln_confirmed_p100Kp, y = ln_death_p100Kp ) ) + 
+  geom_point( color='blue') +
+  geom_smooth( formula = y ~ poly(x,2) , method = lm , color = 'red' ) +
+  labs(x = " ln(Confirmed Cases, per 100K persons)",y = "ln(Deaths, per 100K persons)")
+  
+
+# 3) Piecewise linear spline regression
+# Define the cutoff for ln_confirmed_p100Kp
+cutoff_ln <- 7
+# Run piecewise linear spline regression
+reg3 <- lm_robust(ln_death_p100Kp ~ lspline( ln_confirmed_p100Kp , cutoff_ln ), data = df )
+summary( reg3 )
+ggplot( data = df, aes( x = ln_confirmed_p100Kp, y = ln_death_p100Kp ) ) + 
+  geom_point( color='blue') +
+  geom_smooth( formula = y ~ lspline(x,cutoff_ln) , method = lm , color = 'red' ) +
+  labs(x = " ln(Confirmed Cases, per 100K persons)",y = "ln(Deaths, per 100K persons)")
+
+# 4) Weighted linear regression, using population as weights
+# Weighted-OLS: use reg4 setup and weight with population
+reg4 <- lm_robust(ln_death_p100Kp ~ ln_confirmed_p100Kp, data = df , weights = population)
+summary( reg4 )
+ggplot(data = df, aes(x = ln_confirmed_p100Kp, y = ln_death_p100Kp)) +
+  geom_point(data = df, aes(size=population),  color = 'blue', shape = 16, alpha = 0.6,  show.legend=F) +
+  geom_smooth(aes(weight = population), method = "lm", color='red')+
+  scale_size(range = c(1, 20)) +
+  labs(x = " ln(Confirmed Cases, per 100K persons)",y = "ln(Deaths, per 100K persons)")+
+  annotate("text", x = 7.645246, y = 4.109484, label = "USA", size=5)+
+  annotate("text", x = 1.86661, y =  -1.08202, label = "China", size=5)+
+  annotate("text", x = 6.009055,  y = 1.873128, label = "India", size=5)
+
+```

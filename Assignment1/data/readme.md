@@ -1,7 +1,4 @@
 
-### Data Analysis 2 | Assignment 1
-This repository contains our work to complete the team assignment for the ECBS5140 - Data Analysis 1 course at CEU.
-
 ## Data Source and Variable Description
 
 The data for this project comes from two major sources:
@@ -10,6 +7,19 @@ The data for this project comes from two major sources:
 2. 2019 Population data for countries | [World Bank's World Development Indicators in DataBank link] (https://databank.worldbank.org/reports.aspx?source=2&series=SP.POP.TOTL&country=)
 
 Data was accessed using R via URL and R's WDI package.
+
+# Origin of Data
+
+COVID-19 data is from administrative sources and reported by the countries themselves. The process of data gathering may differ from countries to countries and even within the country. For example, in larger countries like India the process may be different in different counties. In case of this dataset we may have multiple interpretations regarding how the population can be defined. One possibility is to consider the population as all COVID-19 infection cases that have occured until 21th Sep. 2020 and let's say that the gathered data represents* the part of the population which was effectively observed (mainly by testing).
+An other way to look at it is to say that the population is the infinite number of possible outcomes of COVID-19 infections and their effect and this data only shows one realization.
+
+Population data is gathered through reports of countries that the World Bank acknowledges.
+
+*: only "represents" because it is already aggregated
+
+# Data Quality
+
+The collected data might have several flaws. One of the issues is that there are some countries that may factor in political consequence considering the numbers they report. So their numbers may be significantly lower than actuals. Secondly, reliability is also questionable. It is hard to believe that if cases were recounted they would be the same for the same observations. Most likely the data contains many errors due to duplication misshandling and so on. The third issue is comparability. Since there is no universal testing procedure in a global sense some countries might have higher or lower numbers solely due to their testing practices.
 
 # Data Cleaning
 
@@ -20,12 +30,6 @@ These are mainly administrative and calculated fields.
 4. Merge the two data table (Population and COVID-19 data).
 5. Resolve country name conflicts.
 6. Remove rows that have missing values in any field.
-
-
-
-
-
-
 
 # Variable Description of Cleaned Data
 

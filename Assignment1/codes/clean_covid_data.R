@@ -12,9 +12,9 @@ rm(list=ls())
 library(tidyverse)
 
 # Read the raw files
-my_path <- "/Users/Dominik/OneDrive - Central European University/1st_trimester/DA2/Assignment1/"
+my_path <- "/Users/Dominik/OneDrive - Central European University/1st_trimester/DA2/Assignments/Assignment1/"
 # covid data
-cv <- read_csv(paste0(my_path,'data/raw/covid_09_11_2020_raw.csv'))
+cv <- read_csv(paste0(my_path,'data/raw/covid_09_21_2020_raw.csv'))
 # population data
 pop <- read_csv(paste0(my_path,'data/raw/pop_WDI_2019.csv'))
 
@@ -134,10 +134,7 @@ df <- df %>% filter( !( is.na( population ) | is.na( confirmed ) | is.na( death 
 
 #####
 # Save clean data
-my_path <- "/Users/Dominik/OneDrive - Central European University/1st_trimester/DA2/Assignment1/"
+my_path <- "/Users/Dominik/OneDrive - Central European University/1st_trimester/DA2/Assignments/Assignment1/"
 # COVID data
-write_csv( df , paste0(my_path,'data/clean/covid_pop_09_11_2020_clean.csv'))
-
-
-
+write_csv( df , paste0(my_path,'data/clean/covid_pop_09_21_2020_clean.csv'))
 
