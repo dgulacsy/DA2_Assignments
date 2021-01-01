@@ -1,43 +1,39 @@
 
-## Data Source and Variable Description
+# Data Source and Variable Description
 
-The data for this project comes from two major sources:
+The data for this project comes from World Banks Open Data using the WDI API service. The obtained economic indicators are the following:
 
-1. COVID-19 related country-level metrics | [The official GitHub account of Center for Systems Science and Engineering at Johns Hopkins University link] (https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data)
-2. 2019 Population data for countries | [World Bank's World Development Indicators in DataBank link] (https://databank.worldbank.org/reports.aspx?source=2&series=SP.POP.TOTL&country=)
-
-Data was accessed using R via URL and R's WDI package.
+1.  [Unemployment] (https://data.worldbank.org/indicator/SL.UEM.TOTL.ZS)
+2.  [Inflation] (https://data.worldbank.org/indicator/NY.GDP.DEFL.KD.ZG)
+3.  [GDP Growth] (https://data.worldbank.org/indicator/NY.GDP.MKTP.KD.ZG)
+4.  [Government Expenditure] (https://data.worldbank.org/indicator/NE.CON.GOVT.ZS)
+5.  [Broad money] (https://data.worldbank.org/indicator/FM.LBL.BMNY.GD.ZS)
+6.  [Gross savings] (https://data.worldbank.org/indicator/FM.LBL.BMNY.GD.ZS)
 
 # Origin of Data
 
-COVID-19 data is from administrative sources and reported by the countries themselves. The process of data gathering may differ from countries to countries and even within the country. For example, in larger countries like India the process may be different in different counties. In case of this dataset we may have multiple interpretations regarding how the population can be defined. One possibility is to consider the population as all COVID-19 infection cases that have occured until 21th Sep. 2020 and let's say that the gathered data represents* the part of the population which was effectively observed (mainly by testing).
-An other way to look at it is to say that the population is the infinite number of possible outcomes of COVID-19 infections and their effect and this data only shows one realization.
-
-Population data is gathered through reports of countries that the World Bank acknowledges.
-
-*: only "represents" because it is already aggregated
+Population data is gathered through annual statistical reports submitted by the countries themselfe mostly via a national statistic institution that the World Bank acknowledges.
 
 # Data Quality
 
-The collected data might have several flaws. One of the issues is that there are some countries that may factor in political consequence considering the numbers they report. So their numbers may be significantly lower than actuals. Secondly, reliability is also questionable. It is hard to believe that if cases were recounted they would be the same for the same observations. Most likely the data contains many errors due to duplication misshandling and so on. The third issue is comparability. Since there is no universal testing procedure in a global sense some countries might have higher or lower numbers solely due to their testing practices.
+The collected data might have several flaws. One of the issues is that there are some countries that may factor in political consequence considering the numbers they report. So their numbers may be significantly lower than actuals. Secondly, reliability is also questionable. It is hard to believe that if cases were recounted they would be the same for the same observations. Most likely the data contains many errors due to duplication misshandling and so on. The third issue is comparability. Since variables are coming from highly aggregated data, the underlying processes that different statistical agencies carry out may differ from country to country.
 
 # Data Cleaning
 
-1. Get rid of variables that are unnecessary for the analysis such as FIPS, Admin2, Last_Update, Lat, Long, Combined_Key, Incidence Rate, Case.Fatality Ratio.
-These are mainly administrative and calculated fields.
-2. Aggregate to have country-level data using summation.
-3. In the population data remove regional observations.
-4. Merge the two data table (Population and COVID-19 data).
-5. Resolve country name conflicts.
-6. Remove rows that have missing values in any field.
+1. Get rid of observations that cannot considered as a country
+2. Delete observations that have any missing values
+3. Convert years to factors
 
 # Variable Description of Cleaned Data
 
-| variable   | unit_of_measurement | type                 | data_type | description                                                                                                                                                                                                                                           | example |
-|------------|---------------------|----------------------|-----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|
-| country    | NA                  | qualitative, nominal | string    | the specific country to which   COVID metrics and population data belongs                                                                                                                                                                             | Austria |
-| confirmed  | case                | quantitative, ratio  | integer   | the number of   COVID-19 infection cases confirmed and probable  (where reported)                                                                                                                                                                     | 31827   |
-| death      | person              | quantitative, ratio  | integer   | the number of   persons confirmed and probable to be deceased at least partly due to COVID-19   (where reported)                                                                                                                                      | 750     |
-| recovered  | case                | quantitative, ratio  | integer   | the number of   COVID-19 infection cases that ended with recovery, these are estimates based   on local media reports, and state and local reporting when available, and   therefore may be substantially lower than the true number (where reported) | 26257   |
-| active     | case                | quantitative, ratio  | integer   | the number of   COVID-19 infection cases that are still active, calculated as (total cases -   total recovered - total deaths)                                                                                                                        | 4820    |
-| population | person              | quantitative, ratio  | integer   | the population   data of the country for 2019                                                                                                                                                                                                         | 8877067 |
+| variable     | unit_of_measurement    | type                   | data_type | description                                                                                                                                                                                                                                                                                                                                                                                                                                                            | example     |
+|--------------|------------------------|------------------------|-----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------|
+| iso2c        | N/A                    | qualitative, nominal   | string    | Unique 2-letter country   identifier code                                                                                                                                                                                                                                                                                                                                                                                                                              | HR          |
+| country      | N/A                    | qualitative, nominal   | string    | The specific country to which   economic indicators belong to                                                                                                                                                                                                                                                                                                                                                                                                          | Croatia     |
+| year         | N/A                    | quantitative, interval | integer   | The year to which economic   indicators belong to                                                                                                                                                                                                                                                                                                                                                                                                                      | 2017        |
+| inflation    | % (annual)             | quantitative, ratio    | double    | Inflation as measured by the   annual growth rate of the GDP implicit deflator shows the rate of price   change in the economy as a whole. The GDP implicit deflator is the ratio of   GDP in current local currency to GDP in constant local currency.                                                                                                                                                                                                                | 1.163223958 |
+| unemployment | % of total labor force | quantitative, ratio    | double    | Inflation as measured by the   annual growth rate of the GDP implicit deflator shows the rate of price   change in the economy as a whole. The GDP implicit deflator is the ratio of   GDP in current local currency to GDP in constant local currency.                                                                                                                                                                                                                | 11.20800018 |
+| savings      | % of GDP               | quantitative, ratio    | double    | Gross savings are calculated as   gross national income less total consumption, plus net transfers.                                                                                                                                                                                                                                                                                                                                                                    | 25.32397711 |
+| money        | % of GDP               | quantitative, ratio    | double    | Broad money (IFS line 35L..ZK)   is the sum of currency outside banks; demand deposits other than those of the   central government; the time, savings, and foreign currency deposits of   resident sectors other than the central government; bank and traveler’s checks;   and other securities such as certificates of deposit and commercial paper.                                                                                                                | 71.02075254 |
+| gdpgrowth    | % (annual)             | quantitative, ratio    | double    | Annual percentage growth rate of   GDP at market prices based on constant local currency. Aggregates are based   on constant 2010 U.S. dollars. GDP is the sum of gross value added by all   resident producers in the economy plus any product taxes and minus any subsidies   not included in the value of the products. It is calculated without making   deductions for depreciation of fabricated assets or for depletion and   degradation of natural resources. | 3.439217352 |
+| govexp       | % of GDP               | quantitative, ratio    | double    | General government final   consumption expenditure (formerly general government consumption) includes   all government current expenditures for purchases of goods and services   (including compensation of employees). It also includes most expenditures on   national defense and security, but excludes government military expenditures   that are part of government capital formation.                                                                         | 19.48227693 |

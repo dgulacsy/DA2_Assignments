@@ -1,15 +1,16 @@
-library(WDI)
-library(ggthemes)
-library(dplyr)
-library(ggplot2)
-require(scales)
+# Initialize environment ----------------------------------------------------------------
+
 library(tidyverse)
 library(texreg)
 library(car)
+
 rm(list = ls())
 
-path <- "/Users/Dominik/OneDrive - Central European University/1st_trimester/DA2/Assignments/Assignment2/"
+path <- "/Users/Dominik/OneDrive - Central European University/1st_trimester/DA2/DA2_Assignments/Assignment2/"
 non_countries <- read_csv(paste0(path,"data/raw/non-countries.csv"))
+
+
+# Get data -------------------------------------------------------------
 
 df<-WDI(
   country = "all",
@@ -20,22 +21,14 @@ df<-WDI(
   cache = NULL
 )
 
-
 colnames(df) <- c("iso2c", "country", "year", "inflation", "unemployment", "savings", "money", "gdpgrowth","govexp")
+
+write_csv(df, paste0(path,"data/raw/unemp_inf.csv"))
+
+# Clean data --------------------------------------------------------------
 
 df <- df[! df$iso2c %in% as.vector(non_countries$`non-countries`),]
 df<-df[complete.cases(df), ]
-df$year <- as.character(df$year)
+df$year <- as.factor(df$year)
 
-write_csv(df,paste0(path,"/data/clean/unemp_infl.csv"))
-
-# EDA
-
-df %>%
-  keep(is.numeric) %>% 
-  gather() %>% 
-  ggplot(aes(value)) +
-  facet_wrap(~key, scales = "free") +
-  geom_histogram()+
-  theme_wsj() + 
-  scale_fill_wsj()
+write_csv(df,paste0(path,"/data/clean/unemp_infl_clean.csv"))
