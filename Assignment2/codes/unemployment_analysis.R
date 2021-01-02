@@ -6,7 +6,7 @@ library(dplyr)
 library(ggplot2)
 library(tidyverse)
 require(scales)
-source(sum_stats)
+source("sum_stat.R")
 
 
 rm(list = ls())
@@ -32,5 +32,8 @@ df %>%
   scale_fill_wsj()
 
 # Summary statistics
-
+sum_stat(df, 
+         colnames(df), 
+         c('mean','median','mode','min','max','1st_qu.','3rd_qu',
+                             'sd','var','range','iqr'))
 
