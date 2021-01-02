@@ -4,8 +4,9 @@ library(WDI)
 library(ggthemes)
 library(dplyr)
 library(ggplot2)
-require(scales)
 library(tidyverse)
+require(scales)
+source(sum_stats)
 
 
 rm(list = ls())
@@ -14,11 +15,13 @@ path <- "/Users/Dominik/OneDrive - Central European University/1st_trimester/DA2
 
 # Import data -------------------------------------------------------------
 
-df <- read_csv(paste0(path,"data/clean/unemp_infl_clean.csv"))
+df <- read_csv("https://raw.githubusercontent.com/dgulacsy/DA2_Assignments/main/Assignment2/data/clean/unemp_infl_clean.csv")
 df$year <- as.factor(df$year)
 
-# EDA
 
+# EDA ---------------------------------------------------------------------
+
+# Histograms
 df %>%
   keep(is.numeric) %>% 
   gather() %>% 
@@ -28,6 +31,6 @@ df %>%
   theme_wsj() + 
   scale_fill_wsj()
 
-# 
+# Summary statistics
 
 
