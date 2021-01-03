@@ -1,0 +1,499 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={Re-evaluation of the Philips curve},
+  pdfauthor={Dominik Gulácsy},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{longtable,booktabs}
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+
+\title{Re-evaluation of the Philips curve}
+\usepackage{etoolbox}
+\makeatletter
+\providecommand{\subtitle}[1]{% add subtitle to \maketitle
+  \apptocmd{\@title}{\par {\large #1 \par}}{}{}
+}
+\makeatother
+\subtitle{Does higher inflation convey lower unemployment?}
+\author{Dominik Gulácsy}
+\date{02/01/2021}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+This analysis is addressing the question whether the inverse
+relationship between unemployment and inflation stated by the Philips
+curve exists in modern economies. I use cross-sectional data on
+countries from 2017. After running several regression models, my results
+support that this inverse relationship does not hold for the present
+(2016-2018). This finding has relevance to appropiately evaluate policy
+decisions regarding unemployment and economic growth, and assess the
+overall health of the economy.
+\end{abstract}
+
+\hypertarget{introduction}{%
+\section{Introduction}\label{introduction}}
+
+The main goal of this analysis is to test the Philips curve's validity
+in current times. This economic theory was developed by
+\href{https://onlinelibrary.wiley.com/doi/full/10.1111/j.1468-0335.1958.tb00003.x}{A.
+W. Phillips} stating that inflation and unemployment have a stable and
+inverse relationship. It was based on the idea that with economic growth
+comes inflation, which in turn should lead to more jobs and less
+unemployment. It sounds logical, however it was seriously called into
+question during the times of stagflation in the 1970's.
+
+The major difference in case of this analysis is that by conducting a
+cross-sectional causal analysis I can get insight on whether the theory
+stands in global terms instead of checking it for one country throughout
+time. To eventually check the theory I run regressions by taking the
+reciprocal of inflation as this should make the pattern of association
+linear when there is indeed a an inverse relationship between
+unemployment and inflation.
+
+\hypertarget{data}{%
+\section{Data}\label{data}}
+
+The data used in the analysis is solely from the World Bank. I used the
+WDI package to download the data in R. The data contains economic
+indicators on 122 countries for 2017 after removing observations with
+any missing values. I may add that it is highly probable that by this
+smaller countries or countries that are in turmoil (e.g.: Venezuela)
+will be underrepresented as they are more likely to have missing values.
+Given that there are only few observations available I ignore this
+issue.
+
+Otherwise, the quality of the raw data is superior, it is
+well-documented and provides good coverage. However, one may argue that
+indicators are not truly comparable and may be politically biased as
+they are from different national statistical agencies. Since there are
+no readily available data to counter for these measurement errors I keep
+in mind this as a limitation to results. Furthermore, to appropriately
+check the inverse relationship I need to drop observations with
+inflation below 0 since it messes up the linear regression. This likely
+makes the sample even less representative as well. Finally, I end up
+with 118 observations.
+
+As I need to regress unemployment on inflation I want to compare
+countries that can be considered similar in every other way but
+inflation. Therefore I use some control variables in my analysis which
+are the following: GDP Growth (\%), Savings (\% of GDP), Broad Money (\%
+of GDP) and Government Expenditure (\% of GDP).
+
+\begin{figure}
+\centering
+\includegraphics{unemployment_analysis_report_files/figure-latex/fig1-1.pdf}
+\caption{Distribution of variables (2017)}
+\end{figure}
+
+As it can be seen on the histograms all variables are in relative terms.
+This approach means that size is not relevant. Also, this makes
+interpretation easier and variables more normal thus improving the fit
+of the linear regression. Some variables are fairly normal while some
+are closer to lognormal distribution (Broad Money, Inflation,
+Unemployment). In case of money supply and unemployment it is likely due
+to the fact that these measures cannot be negative while in case of
+inflation it is the result of a technical requirement.
+
+Taking the logarithm of these variables may alleviate non-normality but
+interpretation would be hard so I decide not to take logs. Looking at
+the distributions I can see some extreme values in gov. expenditure and
+inflation. I investigate their effect as a robustness check later on.
+
+\begin{longtable}[]{@{}lrrrrrr@{}}
+\caption{Descriptive statistics of the variables (2017)}\tabularnewline
+\toprule
+\begin{minipage}[b]{0.07\columnwidth}\raggedright
+statistics\strut
+\end{minipage} & \begin{minipage}[b]{0.18\columnwidth}\raggedleft
+Gov.~Expenditure (\% of GDP)\strut
+\end{minipage} & \begin{minipage}[b]{0.10\columnwidth}\raggedleft
+GDP Growth (\%)\strut
+\end{minipage} & \begin{minipage}[b]{0.15\columnwidth}\raggedleft
+Broad Money (\% of GDP)\strut
+\end{minipage} & \begin{minipage}[b]{0.12\columnwidth}\raggedleft
+Savings (\% of GDP)\strut
+\end{minipage} & \begin{minipage}[b]{0.09\columnwidth}\raggedleft
+Inflation (\%)\strut
+\end{minipage} & \begin{minipage}[b]{0.11\columnwidth}\raggedleft
+Unemployment (\%)\strut
+\end{minipage}\tabularnewline
+\midrule
+\endfirsthead
+\toprule
+\begin{minipage}[b]{0.07\columnwidth}\raggedright
+statistics\strut
+\end{minipage} & \begin{minipage}[b]{0.18\columnwidth}\raggedleft
+Gov.~Expenditure (\% of GDP)\strut
+\end{minipage} & \begin{minipage}[b]{0.10\columnwidth}\raggedleft
+GDP Growth (\%)\strut
+\end{minipage} & \begin{minipage}[b]{0.15\columnwidth}\raggedleft
+Broad Money (\% of GDP)\strut
+\end{minipage} & \begin{minipage}[b]{0.12\columnwidth}\raggedleft
+Savings (\% of GDP)\strut
+\end{minipage} & \begin{minipage}[b]{0.09\columnwidth}\raggedleft
+Inflation (\%)\strut
+\end{minipage} & \begin{minipage}[b]{0.11\columnwidth}\raggedleft
+Unemployment (\%)\strut
+\end{minipage}\tabularnewline
+\midrule
+\endhead
+\begin{minipage}[t]{0.07\columnwidth}\raggedright
+mean\strut
+\end{minipage} & \begin{minipage}[t]{0.18\columnwidth}\raggedleft
+16.08\strut
+\end{minipage} & \begin{minipage}[t]{0.10\columnwidth}\raggedleft
+3.58\strut
+\end{minipage} & \begin{minipage}[t]{0.15\columnwidth}\raggedleft
+62.08\strut
+\end{minipage} & \begin{minipage}[t]{0.12\columnwidth}\raggedleft
+22.16\strut
+\end{minipage} & \begin{minipage}[t]{0.09\columnwidth}\raggedleft
+6.03\strut
+\end{minipage} & \begin{minipage}[t]{0.11\columnwidth}\raggedleft
+7.18\strut
+\end{minipage}\tabularnewline
+\begin{minipage}[t]{0.07\columnwidth}\raggedright
+median\strut
+\end{minipage} & \begin{minipage}[t]{0.18\columnwidth}\raggedleft
+15.35\strut
+\end{minipage} & \begin{minipage}[t]{0.10\columnwidth}\raggedleft
+3.77\strut
+\end{minipage} & \begin{minipage}[t]{0.15\columnwidth}\raggedleft
+53.52\strut
+\end{minipage} & \begin{minipage}[t]{0.12\columnwidth}\raggedleft
+21.51\strut
+\end{minipage} & \begin{minipage}[t]{0.09\columnwidth}\raggedleft
+4.00\strut
+\end{minipage} & \begin{minipage}[t]{0.11\columnwidth}\raggedleft
+5.32\strut
+\end{minipage}\tabularnewline
+\begin{minipage}[t]{0.07\columnwidth}\raggedright
+min\strut
+\end{minipage} & \begin{minipage}[t]{0.18\columnwidth}\raggedleft
+4.40\strut
+\end{minipage} & \begin{minipage}[t]{0.10\columnwidth}\raggedleft
+-4.71\strut
+\end{minipage} & \begin{minipage}[t]{0.15\columnwidth}\raggedleft
+12.67\strut
+\end{minipage} & \begin{minipage}[t]{0.12\columnwidth}\raggedleft
+-2.21\strut
+\end{minipage} & \begin{minipage}[t]{0.09\columnwidth}\raggedleft
+0.26\strut
+\end{minipage} & \begin{minipage}[t]{0.11\columnwidth}\raggedleft
+0.14\strut
+\end{minipage}\tabularnewline
+\begin{minipage}[t]{0.07\columnwidth}\raggedright
+max\strut
+\end{minipage} & \begin{minipage}[t]{0.18\columnwidth}\raggedleft
+54.62\strut
+\end{minipage} & \begin{minipage}[t]{0.10\columnwidth}\raggedleft
+10.30\strut
+\end{minipage} & \begin{minipage}[t]{0.15\columnwidth}\raggedleft
+260.06\strut
+\end{minipage} & \begin{minipage}[t]{0.12\columnwidth}\raggedleft
+55.34\strut
+\end{minipage} & \begin{minipage}[t]{0.09\columnwidth}\raggedleft
+43.07\strut
+\end{minipage} & \begin{minipage}[t]{0.11\columnwidth}\raggedleft
+27.07\strut
+\end{minipage}\tabularnewline
+\begin{minipage}[t]{0.07\columnwidth}\raggedright
+1st\_qu.\strut
+\end{minipage} & \begin{minipage}[t]{0.18\columnwidth}\raggedleft
+11.76\strut
+\end{minipage} & \begin{minipage}[t]{0.10\columnwidth}\raggedleft
+2.15\strut
+\end{minipage} & \begin{minipage}[t]{0.15\columnwidth}\raggedleft
+37.28\strut
+\end{minipage} & \begin{minipage}[t]{0.12\columnwidth}\raggedleft
+15.47\strut
+\end{minipage} & \begin{minipage}[t]{0.09\columnwidth}\raggedleft
+1.95\strut
+\end{minipage} & \begin{minipage}[t]{0.11\columnwidth}\raggedleft
+3.73\strut
+\end{minipage}\tabularnewline
+\begin{minipage}[t]{0.07\columnwidth}\raggedright
+3rd\_qu\strut
+\end{minipage} & \begin{minipage}[t]{0.18\columnwidth}\raggedleft
+18.65\strut
+\end{minipage} & \begin{minipage}[t]{0.10\columnwidth}\raggedleft
+4.84\strut
+\end{minipage} & \begin{minipage}[t]{0.15\columnwidth}\raggedleft
+77.84\strut
+\end{minipage} & \begin{minipage}[t]{0.12\columnwidth}\raggedleft
+27.94\strut
+\end{minipage} & \begin{minipage}[t]{0.09\columnwidth}\raggedleft
+7.40\strut
+\end{minipage} & \begin{minipage}[t]{0.11\columnwidth}\raggedleft
+9.46\strut
+\end{minipage}\tabularnewline
+\begin{minipage}[t]{0.07\columnwidth}\raggedright
+sd\strut
+\end{minipage} & \begin{minipage}[t]{0.18\columnwidth}\raggedleft
+6.62\strut
+\end{minipage} & \begin{minipage}[t]{0.10\columnwidth}\raggedleft
+2.49\strut
+\end{minipage} & \begin{minipage}[t]{0.15\columnwidth}\raggedleft
+37.85\strut
+\end{minipage} & \begin{minipage}[t]{0.12\columnwidth}\raggedleft
+9.68\strut
+\end{minipage} & \begin{minipage}[t]{0.09\columnwidth}\raggedleft
+6.75\strut
+\end{minipage} & \begin{minipage}[t]{0.11\columnwidth}\raggedleft
+5.47\strut
+\end{minipage}\tabularnewline
+\begin{minipage}[t]{0.07\columnwidth}\raggedright
+range\strut
+\end{minipage} & \begin{minipage}[t]{0.18\columnwidth}\raggedleft
+50.22\strut
+\end{minipage} & \begin{minipage}[t]{0.10\columnwidth}\raggedleft
+15.01\strut
+\end{minipage} & \begin{minipage}[t]{0.15\columnwidth}\raggedleft
+247.39\strut
+\end{minipage} & \begin{minipage}[t]{0.12\columnwidth}\raggedleft
+57.54\strut
+\end{minipage} & \begin{minipage}[t]{0.09\columnwidth}\raggedleft
+42.81\strut
+\end{minipage} & \begin{minipage}[t]{0.11\columnwidth}\raggedleft
+26.93\strut
+\end{minipage}\tabularnewline
+\bottomrule
+\end{longtable}
+
+\hypertarget{model-specifications}{%
+\section{Model Specifications}\label{model-specifications}}
+
+\hypertarget{main-model}{%
+\subsection{1. Main model}\label{main-model}}
+
+\begin{tabular}{l c c}
+\hline
+ & \multicolumn{2}{c}{Unemployment rate} \\
+\cline{2-3}
+ & (7)F & (8)F \\
+\hline
+intercept              & $4.46$       & $5.28$       \\
+                       & $(3.36)$     & $(2.78)$     \\
+inflation              & $0.03$       &              \\
+                       & $(0.07)$     &              \\
+1/inflation            & $1.29$       & $1.26$       \\
+                       & $(0.65)$     & $(0.64)$     \\
+GDP Growth ($<$0\%)    & $-0.85^{**}$ & $-0.86^{**}$ \\
+                       & $(0.26)$     & $(0.26)$     \\
+GDP Growth ($>$=0\%)   & $0.19^{*}$   & $0.17^{*}$   \\
+                       & $(0.08)$     & $(0.08)$     \\
+Broad Money ($<$37\%)  & $-0.03^{*}$  & $-0.03^{**}$ \\
+                       & $(0.01)$     & $(0.01)$     \\
+Broad Money ($>$=37\%) &              & $0.01$       \\
+                       &              & $(0.65)$     \\
+\hline
+R$^2$                  & $0.15$       & $0.15$       \\
+Adj. R$^2$             & $0.11$       & $0.11$       \\
+Num. obs.              & $118$        & $118$        \\
+RMSE                   & $5.16$       & $5.17$       \\
+\hline
+\multicolumn{3}{l}{\scriptsize{$^{***}p<0.001$; $^{**}p<0.01$; $^{*}p<0.05$}}
+\end{tabular}
+
+\hypertarget{parameter-stability}{%
+\subsection{2. Parameter Stability}\label{parameter-stability}}
+
+\hypertarget{effect-of-influential-observations}{%
+\subsection{3. Effect of Influential
+Observations}\label{effect-of-influential-observations}}
+
+\hypertarget{findings}{%
+\section{Findings}\label{findings}}
+
+generalization, external validity how close it is to causality, what
+other confounders there may be
+
+\hypertarget{summary}{%
+\section{Summary}\label{summary}}
+
+\hypertarget{appendix}{%
+\section{Appendix}\label{appendix}}
+
+\hypertarget{i.-model-specification}{%
+\subsection{I. Model Specification}\label{i.-model-specification}}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Investigate pattern of association for 2017 (LOESS charts)
+  \textbackslash begin\{figure\}
+\end{enumerate}
+
+\{\centering \includegraphics{unemployment_analysis_report_files/figure-latex/fig17-1}
+
+\}
+
+\caption{Patterns of associations between pairs of variables (2017)}\label{fig:fig17}
+
+\textbackslash end\{figure\}
+
+\begin{figure}
+
+{\centering \includegraphics{unemployment_analysis_report_files/figure-latex/fig_corr_17-1} 
+
+}
+
+\caption{Corraltion matrix of variables (2017)}\label{fig:fig_corr_17}
+\end{figure}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{1}
+\tightlist
+\item
+  Model Comparison 2017
+\end{enumerate}
+
+\begin{figure}
+
+{\centering \includegraphics{unemployment_analysis_report_files/figure-latex/fig_regs_17-1} 
+
+}
+
+\caption{Modelling unemployment with inflation and 1/inflation (2017)}\label{fig:fig_regs_17}
+\end{figure}
+
+\begin{tabular}{l c c c c c c c c}
+\hline
+ & \multicolumn{8}{c}{Unemployment rate} \\
+\cline{2-9}
+ & (1) & (2) & (3) & (4) & (5) & (6) & (7)F & (8)F \\
+\hline
+intercept              & $6.97^{***}$ & $7.30^{***}$ & $10.59^{***}$ & $6.51^{**}$  & $1.79$       & $2.95$       & $4.46$       & $5.28$       \\
+                       & $(0.71)$     & $(0.60)$     & $(1.43)$      & $(2.10)$     & $(3.23)$     & $(3.78)$     & $(3.36)$     & $(2.78)$     \\
+inflation              & $0.03$       &              & $-0.00$       & $0.06$       & $0.08$       & $0.05$       & $0.03$       &              \\
+                       & $(0.08)$     &              & $(0.07)$      & $(0.07)$     & $(0.07)$     & $(0.08)$     & $(0.07)$     &              \\
+1/inflation            &              & $-0.27$      &               &              &              &              &              & $0.01$       \\
+                       &              & $(0.60)$     &               &              &              &              &              & $(0.65)$     \\
+GDP Growth ($<$0\%)    &              &              & $1.17$        & $2.05^{*}$   & $2.04^{*}$   & $1.19$       & $1.29$       & $1.26$       \\
+                       &              &              & $(0.74)$      & $(0.96)$     & $(0.88)$     & $(0.64)$     & $(0.65)$     & $(0.64)$     \\
+GDP Growth ($>$=0\%)   &              &              & $-0.87^{**}$  & $-0.69^{**}$ & $-0.70^{**}$ & $-0.82^{**}$ & $-0.85^{**}$ & $-0.86^{**}$ \\
+                       &              &              & $(0.27)$      & $(0.25)$     & $(0.25)$     & $(0.27)$     & $(0.26)$     & $(0.26)$     \\
+Gov. Exp. ($<$22\%)    &              &              &               & $0.20$       & $0.16$       &              &              &              \\
+                       &              &              &               & $(0.11)$     & $(0.12)$     &              &              &              \\
+Gov. Exp. ($>$=22\%)   &              &              &               & $0.19$       & $0.17$       &              &              &              \\
+                       &              &              &               & $(0.29)$     & $(0.28)$     &              &              &              \\
+Broad Money ($<$37\%)  &              &              &               &              & $0.17$       & $0.19^{*}$   & $0.19^{*}$   & $0.17^{*}$   \\
+                       &              &              &               &              & $(0.09)$     & $(0.09)$     & $(0.08)$     & $(0.08)$     \\
+Broad Money ($>$=37\%) &              &              &               &              & $-0.02^{*}$  & $-0.02$      & $-0.03^{*}$  & $-0.03^{**}$ \\
+                       &              &              &               &              & $(0.01)$     & $(0.01)$     & $(0.01)$     & $(0.01)$     \\
+Savings ($<$15\%)      &              &              &               &              &              & $0.14$       &              &              \\
+                       &              &              &               &              &              & $(0.14)$     &              &              \\
+Savings ($>$=15\%)     &              &              &               &              &              & $-0.09$      &              &              \\
+                       &              &              &               &              &              & $(0.06)$     &              &              \\
+\hline
+R$^2$                  & $0.00$       & $0.00$       & $0.11$        & $0.14$       & $0.17$       & $0.16$       & $0.15$       & $0.15$       \\
+Adj. R$^2$             & $-0.01$      & $-0.01$      & $0.09$        & $0.10$       & $0.12$       & $0.11$       & $0.11$       & $0.11$       \\
+Num. obs.              & $118$        & $118$        & $118$         & $118$        & $118$        & $118$        & $118$        & $118$        \\
+RMSE                   & $5.49$       & $5.49$       & $5.23$        & $5.18$       & $5.14$       & $5.17$       & $5.16$       & $5.17$       \\
+\hline
+\multicolumn{9}{l}{\scriptsize{$^{***}p<0.001$; $^{**}p<0.01$; $^{*}p<0.05$}}
+\end{tabular}
+
+\hypertarget{ii.-robustness-check}{%
+\subsection{II. Robustness Check}\label{ii.-robustness-check}}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  Dropping observations that have government expenditure above 30\%
+\item
+  Dropping observations that have inflation above 30\%
+\end{enumerate}
+
+\hypertarget{iii.-checking-external-validity}{%
+\subsection{III. Checking External
+Validity}\label{iii.-checking-external-validity}}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Investigate pattern of association for 2016 (LOESS charts)
+\end{enumerate}
+
+\begin{center}\includegraphics{unemployment_analysis_report_files/figure-latex/fig16-1} \end{center}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{1}
+\item
+  Model Comparison 2016
+\item
+  Investigate pattern of association for 2018 (LOESS charts)
+\end{enumerate}
+
+\begin{center}\includegraphics{unemployment_analysis_report_files/figure-latex/fig18-1} \end{center}
+
+4.Model Comparison 2018
+
+\end{document}

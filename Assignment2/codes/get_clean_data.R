@@ -1,5 +1,6 @@
 # Initialize environment ----------------------------------------------------------------
 
+library(WDI)
 library(tidyverse)
 
 rm(list = ls())
@@ -13,8 +14,8 @@ non_countries <- read_csv(paste0(path,"data/raw/non-countries.csv"))
 df<-WDI(
   country = "all",
   indicator = c("SL.UEM.TOTL.ZS","NY.GDP.DEFL.KD.ZG","NY.GNS.ICTR.ZS","FM.LBL.BMNY.GD.ZS","NY.GDP.MKTP.KD.ZG","NE.CON.GOVT.ZS","SP.POP.TOTL"),
-  start = 2017,
-  end = 2017,
+  start = 2016,
+  end = 2018,
   extra = FALSE,
   cache = NULL
 )
