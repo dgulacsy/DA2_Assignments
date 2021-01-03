@@ -256,7 +256,7 @@ htmlreg(list(reg7, reg8),
         include.ci = FALSE,
         single.row = FALSE, 
         siunitx = TRUE,
-        caption = "Analysis of the relatioship between unemployment and inflation. Data is for 2017 only."
+        caption = "Analysis of the relationship between unemployment and inflation. Data is for 2017 only."
 )
          
 # PDF
@@ -279,24 +279,10 @@ reg_analysis <- function(df,rule,case) {
   # reg1: No controls, simple linear regression
   reg1 <- lm_robust(unemployment ~ inflation, data = df )
   summary( reg1 )
-  ggplot( data = df, aes( x = inflation, y = unemployment) ) + 
-    geom_point( color='black') +
-    geom_smooth( formula = y ~ x , method = lm , color = 'red' ) +
-    theme_bw() +
-    labs(title = "Reg1: Simple Linear Regression between Unemployment and Inflation",
-         y = "Unemployment (%)",
-         x = "Inflation (%)")
   
   # reg2: No controls, simple linear regression, taking reciprocal of inflation
   reg2 <- lm_robust(unemployment ~ I(1/inflation), data = df )
   summary( reg2 )
-  ggplot( data = df, aes( x = inflation, y = unemployment) ) + 
-    geom_point( color='black') +
-    geom_smooth( formula = y ~ I(1/x) , method = lm , color = 'red' ) +
-    theme_bw() +
-    labs(title = "Reg2: Simple Linear Regression between Unemployment and reciprocal of Inflation",
-         y = "Unemployment (%)",
-         x = "Inflation (%)")
   
   # Models with control variables
   # reg3: control for GDP Growth (P.L.S with knot at 0%)
@@ -337,7 +323,7 @@ reg_analysis <- function(df,rule,case) {
           custom.coef.names = c("intercept","inflation","1/inflation","GDP Growth (<0%)","GDP Growth (>=0%)",
                                 "Gov. Exp. (<22%)","Gov. Exp. (>=22%)", "Broad Money (<37%)", "Broad Money (>=37%)",
                                 "Savings (<15%)", "Savings (>=15%)"),
-          file = paste0( path ,paste0('out/model_comp_case',case,'.html')), 
+          file = paste0( path ,paste0('out/model_comp_case',case,'.html')),
           include.ci = FALSE,
           single.row = FALSE, 
           siunitx = TRUE,
@@ -633,9 +619,5 @@ htmlreg(list(reg1 , reg2 , reg3 , reg4 , reg5, reg6, reg7, reg8),
 
 
 
-# HTML --------------------------------------------------------------------
-
-
-# PDF ---------------------------------------------------------------------
 
 
